@@ -4,7 +4,6 @@ from esphome.components import sensor, uart
 from esphome.const import (
     CONF_ID,
     CONF_VOLTAGE,
-    CONF_LINE_FREQUENCY,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_POWER,
@@ -31,6 +30,7 @@ CONF_CURRENT_REFERENCE = "current_reference"
 CONF_ENERGY_REFERENCE = "energy_reference"
 CONF_POWER_REFERENCE = "power_reference"
 CONF_VOLTAGE_REFERENCE = "voltage_reference"
+CONF_LINE_FREQUENCY = "line_frequency"
 
 bl0939_ns = cg.esphome_ns.namespace("bl0939")
 BL0939 = bl0939_ns.class_("BL0939", cg.PollingComponent, uart.UARTDevice)
