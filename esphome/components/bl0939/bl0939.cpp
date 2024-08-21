@@ -84,6 +84,7 @@ bool BL0939::validate_checksum_(const DataPacket *data) const {
 }
 
 void BL0939::update() {
+  ESP_LOGI(TAG, "SStarting Read! %d", this->address_);
   this->flush();
   this->write_byte(BL0939_READ_COMMAND | (this->address_ & 0xF));
   this->write_byte(BL0939_FULL_PACKET);
