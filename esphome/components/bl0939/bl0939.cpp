@@ -57,7 +57,8 @@ bool BL0939::validate_checksum_(const DataPacket *data) const {
   for (uint32_t i = 0; i < sizeof(data->raw) - 1; i++) {
     checksum += data->raw[i];
   }
-  checksum &= 0xFF;
+  ESP_LOGI(TAG, "BL0939 checksum! 0x%02X and 0x%02X", checksum, data->checksum);
+  checksum ^= 0xFF;
   if (checksum != data->checksum) {
     ESP_LOGW(TAG, "BL0939 invalid checksum! 0x%02X != 0x%02X", checksum, data->checksum);
   }
