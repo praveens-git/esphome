@@ -57,6 +57,12 @@ union DataPacket {  // NOLINT(altera-struct-pack-align)
   };
 } __attribute__((packed));
 
+
+enum LineFrequency : uint8_t {
+  LINE_FREQUENCY_50HZ = 50,
+  LINE_FREQUENCY_60HZ = 60,
+};
+
 class BL0939 : public PollingComponent, public uart::UARTDevice {
  public:
   void set_voltage_sensor(sensor::Sensor *voltage_sensor) { voltage_sensor_ = voltage_sensor; }
@@ -68,6 +74,11 @@ class BL0939 : public PollingComponent, public uart::UARTDevice {
   void set_energy_sensor_2(sensor::Sensor *energy_sensor_2) { energy_sensor_2_ = energy_sensor_2; }
   void set_energy_sensor_sum(sensor::Sensor *energy_sensor_sum) { energy_sensor_sum_ = energy_sensor_sum; }
   void set_address(int address) { address_ = address; }
+  void set_voltage_reference(float voltage_reference) { voltage_reference_ = voltage_reference; }
+  void set_current_reference(float current_reference) { current_reference_ = current_reference; }
+  void set_power_reference(float power_reference) { power_reference_ = power_reference; }
+  void set_energy_reference(float energy_reference) { energy_reference_ = energy_reference; }
+  void set_line_freq(LineFrequency frequency) { frequency_ = frequency; }
 
   void loop() override;
 
@@ -89,6 +100,7 @@ class BL0939 : public PollingComponent, public uart::UARTDevice {
 
   int address_;
   uint8_t bl0939_init_[6][6];
+  LineFrequency frequency_ = LINE_FREQUENCY_50HZ;
 
   // Divide by this to turn into Watt
   float power_reference_ = BL0939_PREF;

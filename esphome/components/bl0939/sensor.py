@@ -4,6 +4,7 @@ from esphome.components import sensor, uart
 from esphome.const import (
     CONF_ID,
     CONF_VOLTAGE,
+    CONF_LINE_FREQUENCY,
     DEVICE_CLASS_CURRENT,
     DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_POWER,
@@ -26,9 +27,19 @@ CONF_ACTIVE_POWER_2 = "active_power_2"
 CONF_ENERGY_1 = "energy_1"
 CONF_ENERGY_2 = "energy_2"
 CONF_ENERGY_TOTAL = "energy_total"
+CONF_CURRENT_REFERENCE = "current_reference"
+CONF_ENERGY_REFERENCE = "energy_reference"
+CONF_POWER_REFERENCE = "power_reference"
+CONF_VOLTAGE_REFERENCE = "voltage_reference"
 
 bl0939_ns = cg.esphome_ns.namespace("bl0939")
 BL0939 = bl0939_ns.class_("BL0939", cg.PollingComponent, uart.UARTDevice)
+
+LineFrequency = bl0939_ns.enum("LineFrequency")
+LINE_FREQS = {
+    50: LineFrequency.LINE_FREQUENCY_50HZ,
+    60: LineFrequency.LINE_FREQUENCY_60HZ,
+}
 
 CONFIG_SCHEMA = (
     cv.Schema(
@@ -82,7 +93,18 @@ CONFIG_SCHEMA = (
                 device_class=DEVICE_CLASS_ENERGY,
                 state_class=STATE_CLASS_TOTAL_INCREASING,
             ),
+            cv.Optional(CONF_LINE_FREQUENCY, default="50HZ"): cv.All(
+                cv.frequency,
+                cv.enum(
+                    LINE_FREQS,
+                    int=True,
+                ),
+            ),
             cv.Optional(CONF_ADDRESS, default=5): cv.int_range(min=0, max=15),
+            cv.Optional(CONF_CURRENT_REFERENCE): cv.float_,
+            cv.Optional(CONF_ENERGY_REFERENCE): cv.float_,
+            cv.Optional(CONF_POWER_REFERENCE): cv.float_,
+            cv.Optional(CONF_VOLTAGE_REFERENCE): cv.float_,
         }
     )
     .extend(cv.polling_component_schema("60s"))
@@ -119,4 +141,13 @@ async def to_code(config):
     if energy_total_config := config.get(CONF_ENERGY_TOTAL):
         sens = await sensor.new_sensor(energy_total_config)
         cg.add(var.set_energy_sensor_sum(sens))
+    cg.add(var.set_line_freq(config[CONF_LINE_FREQUENCY]))
     cg.add(var.set_address(config.get(CONF_ADDRESS)))
+    if config.get(CONF_CURRENT_REFERENCE):
+        cg.add(var.set_current_reference(config[CONF_CURRENT_REFERENCE]))
+    if config.get(CONF_ENERGY_REFERENCE):
+        cg.add(var.set_energy_reference(config[CONF_ENERGY_REFERENCE]))
+    if config.get(CONF_POWER_REFERENCE):
+        cg.add(var.set_power_reference(config[CONF_POWER_REFERENCE]))
+    if config.get(CONF_VOLTAGE_REFERENCE):
+        cg.add(var.set_voltage_reference(config[CONF_VOLTAGE_REFERENCE]))
