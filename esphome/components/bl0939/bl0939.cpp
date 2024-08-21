@@ -35,6 +35,22 @@ static const uint8_t BL0939_INIT_DEFAULT[6][6] = {
     // 0x181C = Half cycle, Fast RMS threshold 6172
     {BL0939_WRITE_COMMAND, BL0939_REG_IB_FAST_RMS_CTRL, 0x1C, 0x18, 0x00, 0x08}};
 
+
+static const uint32_t BL0939_REG_MODE_RMS_400MS = 0;
+static const uint32_t BL0939_REG_MODE_RMS_800MS = 0x100;
+static const uint32_t BL0939_REG_MODE_50HZ_FREQ = 0;
+static const uint32_t BL0939_REG_MODE_60HZ_FREQ = 0x200;
+static const uint32_t BL0939_REG_MODE_CF_OUT_A = 0;
+static const uint32_t BL0939_REG_MODE_CF_OUT_B = 0x800;
+static const uint32_t BL0939_REG_MODE_CFUNABLE_ENERGY_PULSE = 0;
+static const uint32_t BL0939_REG_MODE_CFUNABLE_ALARM = 0x1000;
+
+static const uint32_t BL0939_REG_MODE_DEFAULT = BL0939_REG_MODE_RMS_800MS | BL0939_REG_MODE_50HZ_FREQ | BL0939_REG_MODE_CF_OUT_A | BL0939_REG_MODE_CFUNABLE_ENERGY_PULSE;
+static const uint32_t BL0939_REG_TPS_DEFAULT = 0x07FF;
+
+static const uint32_t BL0939_REG_SOFT_RESET_MAGIC = 0x5A5A5A;
+static const uint32_t BL0939_REG_USR_WRPROT_MAGIC = 0x55;
+
 void BL0939::loop() {
   DataPacket buffer;
   if (!this->available()) {
@@ -71,14 +87,55 @@ void BL0939::update() {
   this->write_byte(BL0939_FULL_PACKET);
 }
 
-void BL0939::setup() {
-  memcpy(this->bl0939_init_, BL0939_INIT_DEFAULT, sizeof(BL0939_INIT_DEFAULT));
+void BL0939::write_reg_(uint8_t reg, uint32_t val) {
+  uint8_t pkt[6];
 
-  for (uint8_t *i : this->bl0939_init_) {
-    i[0] = i[0] | (this->address_ & 0xF);  // Replace Default Address of the IC
-    this->write_array(i, 6);
-    delay(1);
+  this->flush();
+  pkt[0] = BL0939_WRITE_COMMAND | this->address_;
+  pkt[1] = reg;
+  pkt[2] = (val & 0xff);
+  pkt[3] = (val >> 8) & 0xff;
+  pkt[4] = (val >> 16) & 0xff;
+  pkt[5] = (pkt[0] + pkt[1] + pkt[2] + pkt[3] + pkt[4]) ^ 0xff;
+  this->write_array(pkt, 6);
+  delay(1);
+}
+
+int BL0939::read_reg_(uint8_t reg) {
+  union {
+    uint8_t b[4];
+    uint32_t le32;
+  } resp;
+
+  this->write_byte(BL0939_READ_COMMAND | this->address_);
+  this->write_byte(reg);
+  this->flush();
+  if (this->read_array(resp.b, 4) &&
+      resp.b[3] ==
+          (uint8_t) ((BL0939_READ_COMMAND + this->address_ + reg + resp.b[0] + resp.b[1] + resp.b[2]) ^ 0xff)) {
+    resp.b[3] = 0;
+    return resp.le32;
   }
+  return -1;
+}
+
+void BL0939::setup() {
+
+  this->write_reg_(BL0939_REG_SOFT_RESET, BL0939_REG_SOFT_RESET_MAGIC);
+  this->write_reg_(BL0939_REG_USR_WRPROT, BL0939_REG_USR_WRPROT_MAGIC);
+
+  uint32_t mode = BL0939_REG_MODE_DEFAULT;
+  
+  if (this->line_frequency_ == LINE_FREQUENCY_60HZ)
+    mode |= BL0939_REG_MODE_60HZ_FREQ;
+
+  this->write_reg_(BL0939_REG_MODE, mode);
+
+  this->write_reg_(BL0939_REG_USR_WRPROT, 0);
+
+  if (this->read_reg_(BL0939_REG_MODE) != mode)
+    this->status_set_warning("BL0939 setup failed!");
+
   this->flush();
 }
 

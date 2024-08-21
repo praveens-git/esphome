@@ -78,7 +78,10 @@ class BL0939 : public PollingComponent, public uart::UARTDevice {
   void set_current_reference(float current_reference) { current_reference_ = current_reference; }
   void set_power_reference(float power_reference) { power_reference_ = power_reference; }
   void set_energy_reference(float energy_reference) { energy_reference_ = energy_reference; }
-  void set_line_freq(LineFrequency frequency) { frequency_ = frequency; }
+  void set_line_freq(LineFrequency line_frequency) { line_frequency_ = line_frequency; }
+
+  void write_reg_(uint8_t reg, uint32_t val);
+  int read_reg_(uint8_t reg);
 
   void loop() override;
 
@@ -99,8 +102,7 @@ class BL0939 : public PollingComponent, public uart::UARTDevice {
   sensor::Sensor *energy_sensor_sum_{nullptr};
 
   int address_;
-  uint8_t bl0939_init_[6][6];
-  LineFrequency frequency_ = LINE_FREQUENCY_50HZ;
+  LineFrequency line_frequency_ = LINE_FREQUENCY_50HZ;
 
   // Divide by this to turn into Watt
   float power_reference_ = BL0939_PREF;
