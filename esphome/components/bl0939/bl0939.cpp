@@ -69,12 +69,12 @@ void BL0939::loop() {
 
 bool BL0939::validate_checksum_(const DataPacket *data) const {
   uint8_t checksum = BL0939_READ_COMMAND | (this->address_ & 0xF);
-  ESP_LOGI(TAG, "Address of the Device: %d %d %d",checksum, BL0939_READ_COMMAND , (this->address_ & 0xF));
+  ESP_LOGI(TAG, "Address of the Device: %d %d %d",checksum, BL0939_READ_COMMAND , (this->address_));
 
   // Whole package but checksum
   for (uint32_t i = 0; i < sizeof(data->raw) - 1; i++) {
     checksum += data->raw[i];
-    ESP_LOGI(TAG, "Values: %d %d", data->raw[i], checksum);
+    ESP_LOGI(TAG, "Values[%d]: %d %d",i, data->raw[i], checksum);
   }
   checksum ^= 0xFF;
   if (checksum != data->checksum) {
