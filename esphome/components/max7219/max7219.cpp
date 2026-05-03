@@ -101,7 +101,7 @@ const uint8_t MAX7219_ASCII_TO_RAW[95] PROGMEM = {
     MAX7219_UNKNOWN_CHAR,  // 'q', ord 0x71
     0b00000101,            // 'r', ord 0x72
     0b01011011,            // 's', ord 0x73
-    0b00000111,            // 't', ord 0x74
+    0b00001111,            // 't', ord 0x74
     0b00011100,            // 'u', ord 0x75
     0b00011100,            // 'v', ord 0x76
     MAX7219_UNKNOWN_CHAR,  // 'w', ord 0x77
